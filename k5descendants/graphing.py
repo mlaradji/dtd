@@ -58,7 +58,7 @@ def graph_form(chain_vector,chord_length_vector):
 #               ch,clv=(2,0,-1,0,-1,0,2,0),(4,6,4,7,1,4,1,4,1,4)
 #               cvl=gr.make_chain_vertices_list(ch)
 #               H=gr.skeleton(ch)
-#               pos=co.vertex_positions(H,cvl) 
+#               pos=vt.vertex_positions(H,cvl) 
 #               cvl
 #               >>> [[[0, 1, 2, 3]], [[4]], [[5]], [[6, 7, 8, 9]]]
 #               pos

@@ -12,7 +12,6 @@ Created on Mon June  18 12:26:28 2018
 
 
 import dtrl as dtrl
-import vpdl as vpdl
 import examples as examples
 
 import time as time
@@ -267,9 +266,18 @@ def reverse_chain(chain):
 #   this function returns the maximal vector instead of the minimal one. If
 #   reverse=True, the ordering is reversed so that, for instance, (2,1,1)<(1,1,2)
 #   instead of the default (2,1,1)>(1,1,2).
+#
+#   Available modes:    -'unordered': calculates a chain vector and chord length
+#                           vector with no ordering. Fastest.
+#                       -'minimal': calculates the chain vector and chord length
+#                           vector with the minimum chord length vector wrt the
+#                           chosen ordering.
+#                       -'maximal': calculates the chain vector and chord length
+#                           vector with the maximum chord length vector wrt the
+#                           chosen ordering.
 # =============================================================================
 
-def minimal_vector(G,ordering='grlex',reverse=False,maximal=False,verbose=0):
+def vector_form(G,mode='unordered',ordering='grlex',reverse=False,verbose=0):
 
     if G.is_isomorphic(graphs.CompleteGraph(5)):
         return tuple([tuple([3]),tuple([0])]) 
@@ -282,6 +290,21 @@ def minimal_vector(G,ordering='grlex',reverse=False,maximal=False,verbose=0):
         return tuple([tuple([G.order()-2]),tuple([0])]) 
     
     chain_list,chain_vertices_list=deepcopy(dtrl.list_chains(G,lone_vertices=True))
+    
+    if mode=='unordered':
+        is_nzigzag=len(min_clv)==len(min_chain_list)
+        clv=chord_length_vector(H,new_chain_list,new_chain_vertices_list)
+        return tuple([tuple(chain_vector(chain_list,is_nzigzag)),tuple(clv)])
+    
+    # The following code calculates the minimal clv.
+    
+    if mode=='maximal':
+        maximal=True
+    elif mode=='minimal':
+        maximal=False
+    else:
+        raise ValueError('The mode that was specified is not supported. Currently supported modes are unordered, maximal, and minimal.')
+    
     min_clv=chord_length_vector(G,chain_list,chain_vertices_list)
     min_chain_list=deepcopy(chain_list)
     min_chain_vertices_list=deepcopy(chain_vertices_list)
