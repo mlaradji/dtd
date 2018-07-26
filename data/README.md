@@ -1,10 +1,12 @@
- - K5_family.file
+Note that this data, although (hopefully) valid, does not play well with the new functions. A converter for the data will probably be uploaded soon.
+
+ - descendants.file
  
  - Object Type: list
  
  - Importing using the pickle module:
  
-    with open("K5_family.file", "rb") as f:
+    with open("descendants.file", "rb") as f:
         family = pickle.load(f)
     
     return
@@ -25,3 +27,4 @@
     i=0: Graph object
     i=1: vector form of the graph
     i=2: "expanded" vector, which contains information about the triangle types that have been exhausted in the descendant search
+
