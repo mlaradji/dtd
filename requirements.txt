@@ -1,2 +1,2 @@
-mahmoud/boltons
-sagemath/sage>=8.2
+boltons
+sage>=8.2
