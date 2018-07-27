@@ -1,2 +1,2 @@
 boltons
-sagemath.sage >= 8.2
+git+git://github.com/sagemath/sage >= 8.2
