@@ -1,5 +1,5 @@
-# k5-descendants
-Code for enumerating and handling double-triangle descendants, with a focus on 4-regular graphs, especially $K_5$-descendants.
+# dtd: Double Triangle Descendants
+This is a project aimed at producing efficient code for handling and enumrating double-triangle descendants, with a focus on 4-regular graphs and especially $K_5$-descendants.
 
 # Getting Started
 Check out the two .ipynb files in the examples folder.
@@ -8,7 +8,7 @@ As of now, only DTEGraph and eGraph are explained. Other modules might be useabl
 
 # Requirements
 
-SageMath 8.2 is perhaps the only requirement. An .ipynb reader is required to read the examples.
+SageMath 8.2 is perhaps the only requirement. An ipynb reader is required to read the examples.
 
 # Features
 
