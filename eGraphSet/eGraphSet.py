@@ -25,14 +25,12 @@ import thirdparty.boltons.setutils as setutils
 
 import collections
 import itertools
-import pickle
 import copy
 import time
 
 from eGraph.eGraph import eGraph, eGraph_copy
-#from extended.eGraphIndexedSet import eGraphIndexedSet
-import common.graphs as g
-import common.functions as f
+#import common.graphs as cg
+import common.functions as cf
 
 # =============================================================================
 #
@@ -195,29 +193,31 @@ class eGraphSet(setutils.IndexedSet):
 # =============================================================================
 
 
-    def save(self,filename=None, path=None):
+    def save(self, filename = None, extension = "egs", **kwargs):
         '''
-        Function self.save(savename, path): str, str -> None
-        
-        Saves the family to disk.
-        
+        Function self.save(**kwargs): object -> None
+
+        Saves self to disk. Returns without output if succesful. 
+
+        Note that save requires both the pickle and dill modules to be installed.
+
         Options:
-            filename -  str -   If filename is specified, this saves self to filename+".family". If filename is not specified, this saves self to "family_"+str(self.family_version)+"_"+str(self.modified_count)+"_"+str(self.modified_date)+".family".
-            path -      str -   If unspecified, saves to "../data".
+            filename -  str -   The filename to save self as. 
+                                Default: "<self.type>_V<self.version>_M<self.modified_count>+"_D<self.modified_date>".
+            extension - str -   The extension to append to filename. Default: "egs". If None, no extension is appended.
+            path -      str -   The location to which the file should be saved. If unspecified, saves to "../data/".
+            overwrite - bool -  Default: False. If True, overwrites the preexisting files. If False, raises a FileAlreadyExists exception if a file with the same name already exists.
         '''
         
         if filename is None:
-            filename="family_"+str(self.family_version)+"_"+str(self.modified_count)+"_"+str(self.modified_date)
-            
-        if path is None:
-            path="../data/"
+            filename = self.type+"_V"+str(self.version)+"_M"+str(self.modified_count)+"_D"+str(self.modified_date)
         
-        with open(path+filename+".family", "wb") as f:
-            pickle.dump(self, f, pickle.HIGHEST_PROTOCOL)
+        kwargs['extension'] = extension
+        
+        cf.save(self, filename, **kwargs)
             
         return
     
-
     
 # =============================================================================
 #     
@@ -226,30 +226,6 @@ class eGraphSet(setutils.IndexedSet):
 # ============================================================================= 
 
 
-def load(filename, path=None):
-    '''
-    Function load(savename, path): str, str -> object
-        
-    Loads a file from disk.
-    
-    Usage:
-        family=None
-        family=load(family_2.family, path="../data/")
-        
-    Options:
-        filename -  str -   The full filename to load. Note that, unlike Family.save, ".family" is not appended to the filename.
-        path -      str -   If unspecified, loads from "../data/".
-    '''
-            
-    if path is None:
-        path="../data/"
-        
-    with open(path+filename+".family", "rb") as f:
-        file=pickle.load(f)
-            
-    return file
-
-    
 # =============================================================================
 #     
 #   Exceptions

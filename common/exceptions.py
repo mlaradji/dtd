@@ -91,3 +91,18 @@ class InvalidHash(Exception):
     '''
     
     pass
+
+class FileAlreadyExists(Exception):
+    '''
+    Raised when a file with the same name already exists, usually when attempting to save a file.
+    '''
+    
+    pass
+
+
+class FileDoesntExist(Exception):
+    '''
+    Raised when attempting to load a file that doesn't exist.
+    '''
+    
+    pass

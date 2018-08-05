@@ -1,0 +1,12 @@
+$\textbf{Double Triangle Expansion}$
+
+There are several ways to define double triangle expansion. The definition used here is the following. Double triangle expansion is an operation on two distinct edges $e_1$ and $e_2$ of a graph $G$. The edges are subdivided and the resultant degree $2$ vertices are identified. Furthermore, we require that $e_1$ is 
+an edge of some triangle $T$, and that $e_2$ is not an edge of $T$, is incident to a vertex in $T$, and is not adjacent to $e_1$. Another way to think about it is that it is an operation on a triangle and edge subgraph $H$ of $G$, whereby the (only) two non-adjacent edges in $H$ are subdivided and the resultant degree $2$ vertices are identified.
+
+$\textbf{Double Triangle Reduction}$
+
+Double triangle reduction is the inverse of double triangle expansion. There are several ways to define it, but the definition used here is the following. Double triangle reduction is an operation that takes a double triangle with vertices $\{v_0,v_1,v_2,v_3\}$ in a graph $G$, with $(v_0,v_2)$ the common edge between the two triangles. The edges $(v_0,v_3)$, $(v_1,v_3)$ and $(v_2,v_3)$ are removed, and $v_0$ and $v_3$ are identified. We usually require further that the double triangle is not a subgraph of some triple triangle in $G$. This is necessary for some results by Schnetz related to the ancestor of a family to hold.
+
+$\textbf{Double Triangle Ancestor}$
+
+The double triangle ancestor of a graph $G$ is the graph $A$ that is obtained by repeatedly reducing double triangles, starting from G, until unable to do so. Again, we usually require that the reduced double triangles were not part of triple triangles. Note that this definition is slightly different from Schnetz's original definition of ancestor, which includes product splits, an operation that he proved commutes with double triangle reduction.
