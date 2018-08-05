@@ -2,7 +2,7 @@
 For security reasons, I will be signing all of my commits. The fingerprint of my certificate is: 
 F2F1DD580DB49245F9021C75B967D4BDF953BEAE
 
-This is the same certificate that I use when communicating through my email.
+This is the same certificate that I use when communicating through my email (malaradji@gmail.com).
 
 # Other contributors
 
