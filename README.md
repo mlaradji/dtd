@@ -1,5 +1,5 @@
 # dtd: Double Triangle Descendants
-This is a project aimed at producing efficient code for handling and enumerating double-triangle descendants, with a focus on 4-regular graphs and especially $K_5$-descendants.
+This is a project aimed at producing efficient code for handling and enumerating double-triangle descendants, with a focus on 4-regular graphs and especially K_5-descendants.
 
 # Getting Started
 Check out the two .ipynb files in the examples folder.
