@@ -1,3 +1,3 @@
 sage >= 8.2
 boltons
-dill
+uqfoundation/dill
