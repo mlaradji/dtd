@@ -12,7 +12,7 @@ SageMath 8.2 is perhaps the only requirement. An ipynb reader is required to rea
 
 # Features
 
-eGraph - Contains eGraph, a general extension of the sage Graph object, DTEGraph, an extension of eGraph with double triangle operations, and PDGraph, an extension of DTEGraph for pseudodescendants such as $K_5$-descendants. PDGraph is buggy and is being improved.
+eGraph - Contains eGraph, a general extension of the sage Graph object, DTEGraph, an extension of eGraph with double triangle operations, and PDGraph, an extension of DTEGraph for pseudodescendants such as K_5-descendants. PDGraph is buggy and is being improved.
 
 eGraphSet - Contains eGraphSet, which is a general indexed set that has additional functions to deal with graph members, and Family and K5Family which contain functions specific to double triangle families.
 
