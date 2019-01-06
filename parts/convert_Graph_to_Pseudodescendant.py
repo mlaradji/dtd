@@ -11,7 +11,7 @@ Created on Mon Jun 25 11:19:42 2018
 #   from k5descendants import chainlist as cl
 # =============================================================================
 
-import common.graphs as g
+from ..common import graphs as g
 #from common import exceptions
 
 from copy import copy

@@ -29,11 +29,11 @@ Created on Sun Jul 19 11:30:25 2018
 #import copy
 #import time
 
-from extended.eGraph import eGraph
-from search.Family import Family
+from ..eGraph.PDGraph import PDGraph
+from Family import Family
 #from extended.eGraphIndexedSet import eGraphIndexedSet
-import common.graphs as g
-import common.functions as f
+from ..common import graphs as cg
+from ..common import functions as cf
 
 # =============================================================================
 #
@@ -54,16 +54,18 @@ class K5Family(Family):
     version = 0.1
     
     
-    def __init__(self):
+    def __init__(self, add_K5=True):
         '''
         Initialize a Family by F=Family().
         '''
         
-        super(Family, self).__init__()
+        super(K5Family, self).__init__()
         
-        self.tree=eGraph(name="Family Tree", multiedges=False, loops=False, vertex_labels=True).to_directed() 
+        #self.tree=eGraph(name="Family Tree", multiedges=False, loops=False, vertex_labels=True).to_directed() 
         
-        self.expanded_triangle_types=dict() 
+        self.expanded_triangle_types=dict()
+        
+        if add_K5: self.add_K5()
         
         self.has_been_modified()
 
@@ -76,10 +78,10 @@ class K5Family(Family):
         This adds the complete graph $K_5$ to the family.
         '''
         
-        K5 = g.K5()
+        K5 = PDGraph(cg.K5())
         
-        K5.allow_multiple_edges(True)
-        K5.allow_loops(True)
+        K5.allow_multiple_edges(False)
+        K5.allow_loops(False)
         
         self.add_child(K5)
         
@@ -89,29 +91,29 @@ class K5Family(Family):
 # =============================================================================
     
     
-    def add_child(self, graph, parent=None, no_adding = False, **kwargs):
-        '''
-        This adds the graph to self and to self.tree if not a duplicate. Returns None if added, and if not, returns the duplicate of graph in self.
+#     def add_child(self, graph, parent=None, no_adding = False, **kwargs):
+#         '''
+#         This adds the graph to self and to self.tree if not a duplicate. Returns None if added, and if not, returns the duplicate of graph in self.
         
-        Options:
-            parent -    eGraph -    Default: None. If not None, adds an edge to self.tree between graph and parent.
+#         Options:
+#             parent -    eGraph -    Default: None. If not None, adds an edge to self.tree between graph and parent.
             
-            no_adding - bool -      If True, do not add the child to the family. Useful for when only the output of this function is desired.
-        '''
+#             no_adding - bool -      If True, do not add the child to the family. Useful for when only the output of this function is desired.
+#         '''
         
-        duplicate_graph=self.add_graph(graph, no_adding = no_adding, **kwargs)
+#         duplicate_graph=self.add_graph(graph, no_adding = no_adding, **kwargs)
         
-        if no_adding: return duplicate_graph
+#         if no_adding: return duplicate_graph
         
-        if duplicate_graph is None: self.tree.add_vertex(child) 
+#         if duplicate_graph is None: self.tree.add_vertex(child) 
         
-        else: child = duplicate_graph
+#         else: child = duplicate_graph
             
-        if not parent is None: self.tree.add_edge(parent, child)
+#         if not parent is None: self.tree.add_edge(parent, child)
             
-        self.has_been_modified()  
+#         self.has_been_modified()  
             
-        return duplicate_graph
+#         return duplicate_graph
     
 
 # =============================================================================
@@ -353,8 +355,8 @@ def triangle_types_tobe_expanded(desired_order=None, desired_level=None, self_or
         raise TypeError('Both self_order and self_level must be input.')
         
         
-    desired_orders = f.convert_to_iterable(desired_order, raise_None_exception = False)
-    desired_levels = f.convert_to_iterable(desired_level, raise_None_exception = False)
+    desired_orders = cf.convert_to_iterable(desired_order, raise_None_exception = False)
+    desired_levels = cf.convert_to_iterable(desired_level, raise_None_exception = False)
         
     if desired_orders is None:
         desired_orders = set([self_order+1])
@@ -394,7 +396,20 @@ def triangle_types_tobe_expanded(desired_order=None, desired_level=None, self_or
 
     return triangle_types_tobe_expanded
 
-
+# =============================================================================
+#     
+#   Naming
+#
+# ============================================================================= 
+    
+def K5Family_name(graph):
+    
+    # First, check if the graph is a zigzag.
+    n = is_one_zigzag(G)
+    if n != 0:
+        return '$\hat{Z}_{}$'.format(n)
+    else:
+        pass
     
 # =============================================================================
 #     

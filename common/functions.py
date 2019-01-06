@@ -11,6 +11,7 @@ Created on Tue Jul 17 13:34:47 2018
 
 
 import exceptions as exc
+import random as random
 
 
 # =============================================================================
@@ -153,4 +154,47 @@ def load(filename, extension = None, path = None):
 
     return file
 
+# =============================================================================
+
+def random_iterator(iterable, buffer_size = 10):
+    '''
+    Randomize the iterable. 
+    
+    Obtained from 
+Steven Bethard's and 
+Christopher Dunn's comments on http://code.activestate.com/recipes/466177-randomize-an-iterator/.
+    '''
+    
+    iterable = iter(iterable)
+    items = []
+    try:
+        while True:
+            for i in xrange(random.randint(1, buffer_size)):
+                items.append(iterable.next())
+            random.shuffle(items)
+            for i in xrange(random.randint(1, buffer_size)):
+                if items:
+                    yield items.pop()
+                else:
+                    break
+    except StopIteration:
+        random.shuffle(items)
+        for item in items:
+            yield item
+        raise StopIteration
+        
+# =============================================================================
+
+class classproperty(object):
+    '''
+    This is a class equivalent to the @property decorator. Use via the @classproperty decorator.
+    
+    Obtained from user @jchl from [https://stackoverflow.com/questions/5189699/how-to-make-a-class-property].
+    '''
+    
+    def __init__(self, f):
+        self.f = f
+    def __get__(self, obj, owner):
+        return self.f(owner)
+    
 # =============================================================================

@@ -32,7 +32,8 @@ from sage.graphs.graph_generators import graphs
 #    from thirdparty.boltons import setutils
 
 # imports from common
-import common.graphs as g
+from common import graphs as cg
+from common.functions import classproperty
 #import common.functions as f
 #from common.exceptions import NotSubgraph, Underdefined
 #from common.exceptions import UnsupportedOption
@@ -41,7 +42,7 @@ import common.graphs as g
 
 #from search.Family import Family
 
-from eGraph import eGraph
+from eGraph import classproperty, eGraph, eGraph_copy
 from eGraphSet.eGraphSet import eGraphSet
 
 # =============================================================================
@@ -56,6 +57,11 @@ class DTEGraph(eGraph):
     This is an extension of the eGraph class. It adds functions related to double triangle expansion to the class. This class aims to contain functions related to double triangle expansion but not particular to $K_5$-descendants. For the special $K_5$-descendants class, see PDGraph.
     '''
     
+    @classproperty
+    def extra_attributes(cls):
+        extra_attributes = super(cls, cls).extra_attributes
+        extra_attributes['family'] = None
+        return extra_attributes
     
     def __init__(self, data = None, family = None, **kwargs):
         '''
@@ -66,24 +72,24 @@ class DTEGraph(eGraph):
         
         self.family = family
         
-        self.count_functions['expanded'] = lambda G: not self.family is None and self.family.expanded[G]
+        #self.count_functions['expanded'] = lambda G: not self.family is None and self.family.expanded[G]
             
             
                 
 # =============================================================================
 
-    def copy(self, **kwargs):
-        '''
-        Copies the DTEGraph object. Makes sure that the hashes, counts, and count_functions are also copied.
-        '''
+#     def copy(self, **kwargs):
+#         '''
+#         Copies the DTEGraph object. Makes sure that the hashes, counts, and count_functions are also copied.
+#         '''
         
-        graph = super(DTEGraph, self).copy(**kwargs)
+# #         graph = super(DTEGraph, self).copy(**kwargs)
         
-        graph.hashes, graph.counts, graph.count_functions = self.hashes, self.counts, self.count_functions
+# #         graph.hashes, graph.counts, graph.count_functions = self.hashes, self.counts, self.count_functions
         
-        graph.family = self.family
+# #         graph.family = self.family
         
-        return graph
+#         return DTEGraph_copy(self, **kwargs)
         
         
 # =============================================================================
@@ -173,7 +179,7 @@ class DTEGraph(eGraph):
         '''
         
         if e1 is None and e2 is None:
-            e1, e2 = self.DTE_edge_pairs_iterator().next()
+            e1, e2, _, _ = self.DTE_edge_pairs_iterator().next()
     
         if check_if_DTE:
             
@@ -203,10 +209,10 @@ class DTEGraph(eGraph):
         
         if not_triple_triangle:
             triple_triangles = set()
-            for triple_triangle in self.subgraph_search_iterator(g.triple_triangle()):
+            for triple_triangle in self.subgraph_search_iterator(cg.triple_triangle()):
                 triple_triangles.add(tuple(triple_triangle[0:4]))
         
-        for double_triangle in self.subgraph_search_iterator(g.double_triangle()):
+        for double_triangle in self.subgraph_search_iterator(cg.double_triangle()):
             double_triangle = tuple(double_triangle)
             
             if not_triple_triangle and double_triangle in triple_triangles: continue
@@ -229,7 +235,7 @@ class DTEGraph(eGraph):
             
         v0, v1, v2, v3 = double_triangle
         
-        if new_graph: parent = self.copy(immutable = False)
+        if new_graph: parent = self.ecopy(immutable = False)
         else: parent = self
             
         parent.delete_edges([(v0,v2),(v1,v2),(v3,v2)])
@@ -271,16 +277,16 @@ class DTEGraph(eGraph):
 
     def is_triangle_and_edge(self,e1=None,e2=None, also_reverse_e2=True, also_reverse_e1_e2=True):
         '''
-        If e1 and e2 are specified, returns True if e1, e2 are part of a triangle and edge (AKA Tadpole(3,1)), and False otherwise. If e1 and e2 are unspecified, returns self.is_isomorphic(g.triangle_and_edge()).  
+        If e1 and e2 are specified, returns True if e1, e2 are part of a triangle and edge (AKA Tadpole(3,1)), and False otherwise. If e1 and e2 are unspecified, returns self.is_isomorphic(cg.triangle_and_edge()).  
         '''
         
         e1 = copy.copy(e1)
         e2 = copy.copy(e2)
         
         if e1 is None and e2 is None:
-            return self.is_isomorphic(g.triangle_and_edge())
+            return self.is_isomorphic(cg.triangle_and_edge())
         
-        condition=g.triangle_and_edge(e1,e2).is_subgraph(self, induced=False)
+        condition=cg.triangle_and_edge(e1,e2).is_subgraph(self, induced=False)
         
         if condition: return True
         
@@ -296,24 +302,39 @@ class DTEGraph(eGraph):
         
 # =============================================================================        
         
-    def triangle_and_edge_iterator(self, return_edges=False):
+    def triangle_and_edge_iterator(self, return_edges = False, ignore_multiple_edges = True):
         '''
         If return_edges=True, this returns an iterator of tuples of the edges. If False, which is the default, it returns an iterator over the vertex sets of the subgraphs.
         
         The vertex sets are ordered. e1=[0,2] (triangle_edge), e2=[1,3] (path_edge)
         '''
         
-        G=copy.deepcopy(self)
-        G.allow_multiple_edges(0) # This is done because self.subgraph_search_iterator does not yet work with multigraphs.
+        G=self.ecopy()
         
-        iterator=self.subgraph_search_iterator(g.triangle_and_edge())
+        G.allow_multiple_edges(False) # This is done because self.subgraph_search_iterator does not yet work with multigraphs.
+        
+        if ignore_multiple_edges or G == self:
+            pass
+        else:
+            raise ce.UnsupportedOption('Multiple edges must be ignored for this iterator to work, due to a multiple edges not being implemented in self.subgraph_search_iterator.')
+            
+        iterator=self.subgraph_search_iterator(cg.triangle_and_edge())
         while True:
             if return_edges:
                 yield get_edge_triangle_and_edge(iterator.next())
             
             else:
                 yield iterator.next()
-     
+
+    #@property
+    def expanded(self):
+        return self.family.expanded[self]
+#     def copy(self, **kwargs):
+#         '''
+#         Returns a DTEGraph copy of self. Arguments are passed to DTEGraph_copy.
+#         '''
+        
+#         return DTEGraph_copy(self, **kwargs)
 
 # =============================================================================
 # Graph isomorphism
@@ -347,7 +368,26 @@ def get_edge_triangle_and_edge(vertices):
     e3=(vertices[0],vertices[1])    # triangle edge
     e4=(vertices[1],vertices[2])    # triangle edge
     return e1,e2,e3,e4
+
+ 
+# def DTEGraph_copy(graph, **kwargs):
+#     '''
+#     Returns an DTEGraph copy of graph. Passes arguments to eGraph.eGraph_copy.
+#     '''
     
+#     G=copy.deepcopy(graph)
+#     G=eGraph_copy(graph, **kwargs)
+#     G=DTEGraph(G)
+    
+#     try:
+#         kwargs['immutable']
+    
+#     try:
+#         G.family = graph.family
+#     except AttributeError:
+#         G.family = None
+    
+#     return G
     
 # =============================================================================
 #     
@@ -379,3 +419,5 @@ class NoProperDoubleTriangles(Exception):
     '''
     
     pass
+
+# =============================================================================

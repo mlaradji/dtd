@@ -11,10 +11,10 @@ Created on Sun Jun 24 07:53:02 2018
 #   from k5descendants import Zigzag as Z
 # =============================================================================
 
-import common.graphs as g
-from common.exceptions import NotVertex
+from ..common import graphs as g
+from ..common.exceptions import NotVertex
 
-from SimplePart import SimplePart
+from Simplex import Simplex
 
 #from boltons.setutils import IndexedSet
 
@@ -24,7 +24,7 @@ from SimplePart import SimplePart
 #
 # =============================================================================
 
-class Zigzag(SimplePart):
+class Zigzag(Simplex):
     
     type = 'Zigzag'      # class variable shared by all instances
 
@@ -51,9 +51,8 @@ class Zigzag(SimplePart):
         if vertices is None:
             vertices=[first_vertex+i for i in range(0,triangles_count+2)]
             
-        self.vertices=vertices
-        
-        self.set_parent_object(parent_object)
+        self.vertices = vertices
+        self.parent_object = parent_object
         
         
 #----------

@@ -19,22 +19,22 @@ Created on Sun Jun 24 07:53:02 2018
 
 from copy import copy
 
-try:
-    from boltons.setutils import IndexedSet  # Note that this requires to be installed.
+# try:
+#     from boltons.setutils import IndexedSet  # Note that this requires to be installed.
 
-except ImportError:
-    from thirdparty.boltons.setutils import IndexedSet
+# except ImportError:
+#     from ..thirdparty.boltons.setutils import IndexedSet
     
 ## imports from pseudodescendants
 
-from ComplexPart import ComplexPart, CannotAppendPart
+from Complex import Complex, CannotAppendPart
 from Zigzag import Zigzag, CannotMakeFirstVertex
 
 
 ## imports from common
 
-import common.graphs as g
-from common.exceptions import NotSubgraph, Underdefined
+from ..common import graphs as g
+from ..common.exceptions import NotSubgraph, Underdefined
 #from common.exceptions import UnsupportedOption
 
 
@@ -43,7 +43,7 @@ from common.exceptions import NotSubgraph, Underdefined
 # =============================================================================
 
 
-class Chain(ComplexPart):
+class Chain(Complex):
     '''
     Chain object contains the functions common to both open and closed chains.
     A chain is composed of zigzags, and it inherits from the class ComplexPart.
@@ -72,7 +72,7 @@ class Chain(ComplexPart):
             
             #if closed: self.make_closed()
         
-            self.reindex(start_at=starting_vertex) 
+            self.reindex(start_at = start_at) 
             
             
         if zigzag is not None:
@@ -86,7 +86,7 @@ class Chain(ComplexPart):
         #if not chord_vector: chord_vector=tuple([])
         #self.set_chord_vector(chord_vector)
         
-        self.set_parent_object(parent_object)
+        self.parent_object = parent_object
     
     
     def chain_vector(self):
@@ -103,15 +103,15 @@ class Chain(ComplexPart):
     def make_zigzags(self, chain_vector=None):
         if not chain_vector: chain_vector=self.chain_vector()
         
-        zigzags=[]
+        parts=[]
         
         for triangles_count in iter(chain_vector):
             if triangles_count>0:
-                zigzags.append(Zigzag(triangles_count, parent_chain=self))
+                parts.append(Zigzag(triangles_count, parent_object=self))
             else:
                 raise ValueError('The chain vector should only contain positive integers.')
                
-        self.zigzags=zigzags
+        self.parts=parts
         
         self.reindex()
         
@@ -120,9 +120,11 @@ class Chain(ComplexPart):
     
     def identify_first_and_last_vertex(self):
         self.zigzags[-1].vertices[-1]=self.zigzags[0].vertices[0]
-        self.same_first_and_last_vertex=True
-        return
+        return self.zigzags[-1].vertices[-1]
     
+    @property
+    def same_first_and_last_vertex(self):
+        return self.zigzags[-1].vertices[-1] is self.zigzags[0].vertices[0]
     
     def make_closed(self):
         '''
@@ -197,7 +199,7 @@ class Chain(ComplexPart):
         
         return self.first_part()
     
-    
+    @property
     def zigzags(self):
         '''
         Returns the zigzags of self.

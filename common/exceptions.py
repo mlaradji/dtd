@@ -106,3 +106,11 @@ class FileDoesntExist(Exception):
     '''
     
     pass
+
+
+# class Unimplemented(Exception):
+#     '''
+#     Raised when a requested operation has not been implemented yet.
+#     '''
+    
+#     pass

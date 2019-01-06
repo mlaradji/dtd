@@ -10,14 +10,11 @@ Created on Sat Jul  10 15:53:21 2018
 # Import statements 
 # =============================================================================
 
-# Add location to search for imports
-
-#sys.path.append('..')  # This seems to be unnecessary. Unsure why.
-
-# imports 
+# imports from built-ins
 
 import copy
 import collections
+#import functools32 # Replace with functools when the switch to Python 3 is completed.
 
 # imports from sage
 from sage.graphs.graph import Graph
@@ -35,6 +32,8 @@ except ImportError:
 # imports from common
 #import common.graphs as cg
 #import common.functions as cf
+
+from common.functions import classproperty
 from common.exceptions import InvalidHash, NoneReturned
 #from common.exceptions import NotSubgraph, Underdefined
 #from common.exceptions import UnsupportedOption
@@ -46,14 +45,19 @@ from common.exceptions import InvalidHash, NoneReturned
 # =============================================================================
 # Class definitions 
 # =============================================================================
-
+    
 
 class eGraph(Graph):
     '''
     This is an extension of the SageMath Graph class. This aims to contain functions that are not specific to $K_5$-descendants.
     '''
     
-    def __init__(self, data=None, immutable = False, use_preset_count_functions=True, **kwargs):
+    # extra_attributes are attributes that need to be copied in addition to the Graph object, for a full copy.
+    @classproperty
+    def extra_attributes(cls):
+        return {'counts': dict(), 'hashes': dict(), 'count_functions': dict()}
+    
+    def __init__(self, data=None, use_preset_count_functions=True, **kwargs): #immutable = True
         '''
         Can be initialized the same way as a sage Graph object.
         '''
@@ -68,13 +72,15 @@ class eGraph(Graph):
         self.count_functions = dict()
         
         if use_preset_count_functions:
-            self.count_functions['order'] = lambda G: G.order()
-            self.count_functions['triangles_count'] = triangles_count
-            self.count_functions['level'] = lambda G: G.order()-G.triangles_count()
-            self.count_functions['chromatic_number'] = lambda G: G.chromatic_number()
-            self.count_functions['connectivity'] = lambda G: G.conn
-            
-        if immutable: self = self.immutable_copy()
+            self.count_functions.update({
+                'order': lambda G: G.order(),
+                'triangles_count': triangles_count,
+                'level': lambda G: G.order()-G.triangles_count(),
+                'chromatic_number': lambda G: G.chromatic_number(),
+                'connectivity': lambda G: G.connectivity(),
+            })
+                
+        #if immutable: self = self.immutable_copy()
         
 # =============================================================================
 
@@ -83,10 +89,20 @@ class eGraph(Graph):
         Returns an immutable copy of self.
         '''
                                 
-        return self.copy(immutable = True)
+        return self.ecopy(immutable = True)
     
 # =============================================================================    
-    
+
+    def ecopy(self, immutable = False):
+        '''
+        Returns a copy of self. This is different from self.copy in that self.copy only copies the underlying SageMath Graph object, while self.ecopy also copies the extra_attributes. See self.extra_attributes for a list.
+        '''
+        
+        return eGraph_copy(self, graph_class = self.__class__, immutable = immutable)
+        
+
+# =============================================================================  
+
     def hash(self):
         '''
         Returns the hash of an immutable copy of self.
@@ -97,7 +113,24 @@ class eGraph(Graph):
     
 # =============================================================================
 #   Counts
-# =============================================================================        
+# =============================================================================
+
+#         class graphproperty(dict):
+#             '''
+#             Adds caching.
+#             '''
+
+#             def __init__(self, func):
+#                 self.func = func
+
+#             def __call__(self, *args):
+#                 return self[args]
+
+#             def __missing__(self, key):
+#                 result = self[key] = self.func(*key)
+#                 return result
+
+#     # =============================================================================
         
     def set_count(self, count_name, count_value = None, count_function = None):
         '''
@@ -151,18 +184,40 @@ class eGraph(Graph):
         except (InvalidHash, IndexError, NoneReturned) as exc:
             pass
         
-        if count_function is None: count_function = self.count_functions[count_name]
+        if count_function is None: 
+            try:
+                count_function = self.count_functions[count_name]
+            except KeyError:
+                count_function = lambda G: getattr(G, count_name)() # This is a fallback mechanism.
             
         self.set_count(count_name, count_value = count_function(self), count_function = count_function) # Will be reset after every calculation. Desired?
         return self.counts[count_name]
 
+# =============================================================================
+
+    def list_counts(self, count_names = list()):
+        '''
+        This calculates the counts in count_names, returning it as a list of values. Useful for checking condition satisfaction or for sorting purposes. Input is expected to be ordered; for instance, a list, an IndexedSet or an OrderedDict.
+        
+        Example:
+            G = graphs.CompleteGraph(5)
+            G.counts(['order','triangles_count'])
+            >> OrderedDict([('order', 5), ('triangles_count', 10)])
+        '''
+        
+        counts = collections.OrderedDict()
+        
+        for count_name in count_names:
+            counts[count_name] = self.count(count_name)
+            
+        return counts
     
 # =============================================================================
 
     
     def triangles_count(self):
         '''
-        Returns the number of triangles in self. This differs from Graph.triangles_count() in that it also calculates for multigraphs.
+        Returns the number of triangles in self. This differs from Graph.triangles_count() in that it also works for multigraphs.
         '''
         
         count_function = triangles_count
@@ -182,19 +237,28 @@ class eGraph(Graph):
     
 # ============================================================================= 
 
-    def satisfies_conditions(self, conditions = dict()):
+    def satisfies(self, conditions = dict()):
         '''
         Returns True if the graph satisfies the conditions, and False otherwise.
 
         Options:
-            graph -     eGraph -        eGraph object.
-
-            conditions -    dict -  A count_name to count_value dict. Eg, conditions = {'order': 3, 'triangles_count': 4}.
+            conditions -    dict -  A count_name to count_value dict. Eg, conditions = {'order': 3, 'triangles_count': 4}. An iterable object can also be used for count_value. Eg, conditions = {'order': [3,5]} 
         '''
 
         for count_name in conditions:
-            if not self.count(count_name) == conditions[count_name]: return False
-            
+            # If count_value is iterable, iterate over those values.
+            try:
+                satisfied = False
+                for count_value in conditions[count_name]:
+                    if self.count(count_name) == count_value:
+                        satisfied = True
+                        break
+                        
+                if not satisfied: return False
+                
+            except TypeError:
+                if not self.count(count_name) == conditions[count_name]: return False
+                
         return True
     
 
@@ -315,25 +379,24 @@ class eGraph(Graph):
 # =============================================================================
 
 
-def eGraph_copy(graph, immutable = False):
+def eGraph_copy(graph, graph_class = eGraph, immutable = False):
     '''
     Returns an eGraph copy of graph.
     
     Options:
+        graph_class -   class -     The desired class of the new graph.  
         immutable -     bool -      Whether to return an immutable eGraph copy.
     '''
     
-    G=copy.deepcopy(graph)
-    G=eGraph(graph)
+    # Convert graph into the specified class, and make it immutable if specified.
+    G = graph_class(graph).copy(immutable = immutable) 
     
-    G=G.copy(immutable = immutable)
-    
-    try:
-        G.counts = graph.counts
-        G.hashes = graph.hashes
+    for attr in G.extra_attributes:       
+        try:
+            setattr(G, attr, getattr(graph, attr))
         
-    except AttributeError:
-        pass
+        except AttributeError:
+            setattr(G, attr, G.extra_attributes[attr])
     
     return G
 
@@ -341,7 +404,7 @@ def eGraph_copy(graph, immutable = False):
 
 def triangles_count(G): 
     '''
-    This is a triangles_count that works for graphs with multiple edges, which relies on the Matrix Tree Theorem corollary that "trace(G.adjacency_matrix()**3/6)=triangles count". Note that it is quite inefficient.
+    This is a triangles_count that works for graphs with multiple edges, which relies on the Matrix Tree Theorem corollary that "trace(G.adjacency_matrix()**3/6)=triangles count". Note that it is quite slow.
     '''
     
     try:

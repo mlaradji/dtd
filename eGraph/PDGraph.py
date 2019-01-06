@@ -26,13 +26,13 @@ Created on Sat Jul  22 15:53:21 2018
 # imports from thirdparty
 
 #try:
-#    from boltons import setutils  # Note that this requires to be installed.
+from boltons import setutils  # Note that this requires to be installed.
 
 #except ImportError:
 #    from thirdparty.boltons import setutils
 
 # imports from common
-import common.graphs as g
+from ..common import graphs as cg
 #import common.functions as f
 #from common.exceptions import NotSubgraph, Underdefined
 #from common.exceptions import UnsupportedOption
@@ -113,13 +113,13 @@ class PDGraph(DTEGraph):
         
         while ValueError_count < ValueError_threshold:
             try:
-                triangles_by_type=[set(),set(),set(),set()]
+                triangles_by_type=[setutils.IndexedSet() for i in range(0,4)]
 
                 for i in range(0,4):
 
                     #if not triangles_by_type[i]: continue
 
-                    for triangle in H.subgraph_search_iterator(g.triangle_type(i+1, with_adjacent_edge=True)):
+                    for triangle in H.subgraph_search_iterator(cg.triangle_type(i+1, with_adjacent_edge=True)):
 
                         triangle=triangle[0:4]      # The first four vertices are always the same.
 

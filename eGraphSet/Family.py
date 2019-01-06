@@ -29,11 +29,11 @@ Created on Sun Jun 24 08:50:25 2018
 #import copy
 #import time
 
-from eGraph import eGraph
+from eGraph import DTEGraph, eGraph
 from eGraphSet import eGraphSet
 #from extended.eGraphIndexedSet import eGraphIndexedSet
-import common.graphs as g
-import common.functions as f
+#import ..common.graphs as cg
+#import ..common.functions as cf
 
 # =============================================================================
 #
@@ -44,35 +44,62 @@ class Family(eGraphSet):
    Attributes:         
        self.expanded_triangle_types     dict -  This is a Graph to expanded triangle types dict (of form [a,b,c,d] where a,b,c,d in {0,1}).
        
-       self.expanded    - dict -        This is an eGraph to expanded 
+       self.expanded    - dict          - This is an eGraph to Bool dictionary. The Bool values indicate whether the eGraph was fully expanded.
        self.version                     - This is a number indicating the version of the Family module.
        self.creation_date               - This is a string indicating when the family was created.
        self.modified_date               - This is a string indicating when the family was last modified.    
     '''
 
-    type = 'Family'      # class variable shared by all instances
+    type = 'Double Triangle Family'      # class variable shared by all instances  
     
-    version = 0.1
-    
-    
-    def __init__(self):
+    def __init__(self, *pargs, **kwargs):
         '''
         Initialize a Family by F=Family().
         '''
         
-        super(Family, self).__init__()
+        super(Family, self).__init__(*pargs, **kwargs)
         
-        self.tree=eGraph(name="Family Tree", multiedges=False, loops=False, vertex_labels=True).to_directed() 
+        self.tree=eGraph.eGraph(name="Family Tree", multiedges=False, loops=False, vertex_labels=True).to_directed() 
         
         self.expanded = dict()
         
+        self._graph_class = DTEGraph.DTEGraph
+        
         self.has_been_modified()
 
+# =============================================================================
         
-# =============================================================================      
+    @property
+    def graph_class(self):
+        '''
+        The graph class of a Family object is the expected Python class of its graph members.
+        '''
+        
+        return self._graph_class
     
+# # =============================================================================      
     
-    def add_child(self, graph, parent = None, no_adding = False, **kwargs):
+#     def tree(self, conditions = dict()):
+#         '''
+#         Returns the family "tree", showing only the graphs that satisfy the conditions, if specified.
+#         '''
+        
+#         graphs = self.restrict(conditions)
+#         return self.tree.subgraph(graphs)
+    
+# =============================================================================
+
+    def plot_tree(self, conditions = dict(), layout = 'acyclic', **kwargs):
+        '''
+        Plot the family tree, removing any vertices (from the plotted tree; the vertices remain in the full tree) which do not satisfy the specified conditions.
+        '''
+        
+        graphs = set(self.member_iterator(conditions))
+        return self.tree.subgraph(graphs).plot(layout = layout, **kwargs)
+        
+        
+    
+    def add_child(self, graph, parent = None, no_adding = False, convert_to_eGraph = True, **kwargs):
         '''
         This adds the graph to self and to self.tree if not a duplicate. Returns None if added, and if not, returns the duplicate of graph in self.
         
@@ -82,20 +109,27 @@ class Family(eGraphSet):
             no_adding - bool -      If True, do not add the child to the family. Useful for when only the output of this function is desired.
         '''
         
-        child = graph.copy(immutable = True)
+        #child = graph.copy(immutable = True)
+        
+        if convert_to_eGraph:
+            child = eGraph.eGraph_copy(graph, graph_class = self.graph_class, immutable = True)
+        
+        else:
+            child = graph
         
         duplicate_graph = self.add_graph(child, no_adding = no_adding, **kwargs)
         
         if no_adding: return duplicate_graph
         
         if duplicate_graph is None: 
+            #child = self[-1] # The child will be the most recent addition to self. This is a little hacky.
             self.tree.add_vertex(child) 
             self.set_expanded(child, False)
             child.family = self
         
         else: child = duplicate_graph
             
-        if not parent is None: self.tree.add_edge(parent, child)
+        if parent is not None: self.tree.add_edge(parent, child)
             
         self.has_been_modified()  
             
@@ -126,44 +160,40 @@ class Family(eGraphSet):
         
         already_output_graphs = set()
         
-        for descendant in self.member_iterator(order = order, level = level, **kwargs):
+        for descendant in self.member_iterator(conditions): #, **kwargs):
             
-            # The children Family will be used to speed up the isomorphism check process, especially if append_new_children = False.
+            # Skip the descendant if it has already been expanded.
+            if self.expanded[descendant]: continue
             
+            # The children eGraphSet should speed up the isomorphism check process, especially if add_new_children = False.
             children = eGraphSet()
             
-            # This line is to yield preexisting children.
-            
+            # These lines is to yield preexisting children.
             if yield_preexisting_descendants and descendant not in already_output_graphs:
-                
                 yield descendant
                 already_output_graphs.add(descendant)
-            
             
  
             for child in descendant.children_iterator(**kwargs):
                 
                 # Check if child is in children of current descendant.
-                duplicate_graph = children.add_graph(graph=child, only_nonisomorphic = only_nonisomorphic) 
-                
-                
+                duplicate_graph = children.add_graph(graph=child, require_nonisomorphic = only_nonisomorphic) 
                 
                 # Check if child is in self.
                 if duplicate_graph is None:
-                    duplicate_graph = self.add_child(child, parent=descendant, only_nonisomorphic = only_nonisomorphic, no_adding = not add_new_children)
+                    duplicate_graph = self.add_child(child, parent=descendant, require_nonisomorphic = only_nonisomorphic, no_adding = not add_new_children)
                     
                 
                 if duplicate_graph is None:
                     # This means that child is a new graph.
                     
                     yield child
-                    already_output_graphs.add(child)                   
+                    already_output_graphs.add(child.ecopy(immutable=True))                   
                 
                 else: child = duplicate_graph
     
-                
+            # All triangles in descendant have been expanded, so we set self.expanded[descendant] accordingly.    
             if add_new_children:
-                
                 self.set_expanded(descendant, **kwargs)
         
 # =============================================================================
@@ -192,6 +222,7 @@ class Family(eGraphSet):
             no_max_order = False
         else:
             no_max_order = True
+            conditions['order'] = 3 # ***TODO*** Fix me.
         
             
         while no_max_order or conditions['order']>0:
@@ -204,7 +235,11 @@ class Family(eGraphSet):
 
             # Next, we iterate over the children of preexisting members of self.
             
-            conditions['order'] -= 1
+            if no_max_order:
+                conditions['order'] += 1
+            else:    
+                conditions['order'] -= 1
+                
             conditions['expanded'] = False
             
             for descendant in self.descendants_iterator(conditions):

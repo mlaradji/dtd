@@ -21,7 +21,7 @@ Created on Sun Jul 19 10:50:25 2018
 #from sage.graphs.graph_generators import graphs
 from sage.graphs.graph import Graph
 
-import thirdparty.boltons.setutils as setutils
+import boltons.setutils as setutils
 
 import collections
 import itertools
@@ -30,7 +30,7 @@ import time
 
 from eGraph.eGraph import eGraph, eGraph_copy
 #import common.graphs as cg
-import common.functions as cf
+from common import functions as cf
 
 # =============================================================================
 #
@@ -50,15 +50,12 @@ class eGraphSet(setutils.IndexedSet):
 
     type = 'eGraphSet'      # class variable shared by all instances
     
-    version=0.1
-    
-    
-    def __init__(self):
+    def __init__(self, *pargs, **kwargs):
         '''
         Initialize a Family by F=Family().
         '''
         
-        super(eGraphSet, self).__init__()
+        super(eGraphSet, self).__init__(*pargs, **kwargs)
         
         self.creation_date=time.strftime('%Y-%m-%d_%H:%M:%S')
         self.modified_count=0
@@ -177,17 +174,38 @@ class eGraphSet(setutils.IndexedSet):
 
 # =============================================================================
 
-        
-    def member_iterator(self, **kwargs):
+    def restrict(self, conditions = dict(), inplace = False):
         '''
-        Returns an iterator of the members of self that satisfy the imposed conditions. This functions takes the same kwargs as graph_satisfies_condiions. Currently, only order and level have been implemented.
+        Returns a restricted version of self that only contains graphs satisfying the conditions.
+        '''
+        
+        removed_graphs = set()
+        
+        for member in self.member_iterator(conditions, complement = True):
+            removed_graphs.add(member)
+            
+        if inplace:
+            self.difference_update(removed_graphs)
+        
+        if not inplace: 
+            return self.difference(removed_graphs)
+        
+
+# =============================================================================
+        
+    def member_iterator(self, conditions = dict(), complement = False):
+        '''
+        Returns an iterator of the members of self that satisfy the imposed conditions. This functions takes the same kwargs as graph.satisfies_condiions.
+        
+        Options:
+            complement - bool - If True, returns members that do not satisfy the conditions.
         '''
                     
         # Iterate over the descendants in self.
         
         for graph in self:
                 
-            if graph.satisfies_conditions(**kwargs): yield graph
+            if complement ^ graph.satisfies(conditions): yield graph
                 
 
 # =============================================================================
@@ -218,7 +236,23 @@ class eGraphSet(setutils.IndexedSet):
             
         return
     
-    
+# # =============================================================================
+
+#     def sort(self, conditions = list(), **kwargs):
+#         '''
+#         Function self.sort: eGraphSet -> eGraphSet
+        
+#         Options:
+#             conditions - str to str OrderedDict - The conditions by which to sort.
+#         '''
+        
+#         sorted_indices = sorted(range(len(self)), key = lambda i: self[i].count_list(conditions))
+        
+        
+        
+        
+        
+        
 # =============================================================================
 #     
 #   Functions

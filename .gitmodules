@@ -1,0 +1,3 @@
+[submodule "thirdparty/boltons"]
+	path = thirdparty/boltons
+	url = https://github.com/mahmoud/boltons.git

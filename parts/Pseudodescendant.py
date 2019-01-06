@@ -14,14 +14,15 @@ Created on Tue Jun 26 17:34:42 2018
 from Chain import *
 from LoneVertex import *
 from ChordVector import *
-from Complex import *
+from ChordedComplex import ChordedComplex
 
-from common import exceptions
-from common import graphs as g
+from ..common import exceptions
+from ..common import graphs as g
+from ..eGraph.PDGraph import PDGraph as Graph
 
 import convert_Graph_to_Pseudodescendant as cgpd
 
-from sage.graphs.graph import Graph
+#from sage.graphs.graph import Graph
 from copy import copy
 #import time  
 
@@ -30,10 +31,10 @@ from copy import copy
 #
 # =============================================================================
 
-global current_version
-current_version='PD_0.1'
+#global current_version
+#current_version='PD_0.1'
 
-class Pseudodescendant(Complex):
+class Pseudodescendant(ChordedComplex):
     '''
     # class Pseudodescendant.
     #
@@ -50,11 +51,14 @@ class Pseudodescendant(Complex):
     def __init__(self, chain_vector=None, chord_vector=None, parts=None, 
                  starting_vertex=None, graph=None):
         
-        global current_version
-        self.version=current_version
+        #global current_version
+        #self.version=current_version
         
-        chord_edges=None
-        self.chord_vector=ChordVector(parent_object=self)
+        #chord_edges=None
+        
+        self.max_degree = 4
+        self.end_vertex_degree = 2
+        self.chord_vector = chord_vector
         
         self.same_first_and_last_vertex=False
         
@@ -77,7 +81,7 @@ class Pseudodescendant(Complex):
 
         #if chord_vector is None: chord_vector=tuple([])
             
-        self.set_chord_vector(chord_vector, chord_edges=chord_edges)
+        #self.set_chord_vector(chord_vector, chord_edges=chord_edges)
             
     def make_parts(self, chain_vector=None, parts=None, verbose=0):
         
@@ -110,14 +114,14 @@ class Pseudodescendant(Complex):
                 self.parts.append(LoneVertex())
             
             else:   # This means its a chain.
-                chain=Chain(vector,closed=no_breaks)
+                chain=Chain(vector,)#closed=no_breaks)
                 self.parts.append(chain)
         
         self.reindex()
         
         return
     
-    
+    @property
     def chain_vector(self):
         
         chain_vector=[]
@@ -171,7 +175,9 @@ class Pseudodescendant(Complex):
             parts.append(part)
 
         return
-            
+    
+    def graph(self, present_edges = 'full'):
+        return Graph(super(Pseudodescendant, self).graph(present_edges = present_edges))
     
 # =============================================================================
 # Function self.ncztl():   Pseudodescendant -> List
@@ -269,28 +275,28 @@ class Pseudodescendant(Complex):
 
 
 def break_chain_vector(chain_vector, return_no_breaks=False):
-   '''
-   # Function break_chain_vector(chain_vector): list -> list
-   #
-   #   This function takes a chain vector and breaks it up into smaller parts, 
-   #       with each part being a chain vector for an open chain or a lone vertex.
-   #
-   #    Options:
-   #        return_no_breaks - bool - return the number of breaks.
-   #
-   #    Examples:      
-   #       cv=(2,0,-1,0,-1,0,2,0)
-   #       break_chain_vector(cv)
-   #       >>> [[2],[-1],[-1],[2]]
-   #
-   #       cv=(2,2,0,-1,0)
-   #       break_chain_vector(cv)
-   #       >>> [[2,2],[-1]]
-   #        
-   #       cv=[1,2,0,2,2,-1,2,3,0,-1,-1]
-   #       break_chain_vector(cv)
-   #       >>> [[1, 2], [2, 2], [-1], [2, 3], [-1], [-1]]
-   '''
+    '''
+    # Function break_chain_vector(chain_vector): list -> list
+    #
+    #   This function takes a chain vector and breaks it up into smaller parts, 
+    #       with each part being a chain vector for an open chain or a lone vertex.
+    #
+    #    Options:
+    #        return_no_breaks - bool - return the number of breaks.
+    #
+    #    Examples:      
+    #       cv=(2,0,-1,0,-1,0,2,0)
+    #       break_chain_vector(cv)
+    #       >>> [[2],[-1],[-1],[2]]
+    #
+    #       cv=(2,2,0,-1,0)
+    #       break_chain_vector(cv)
+    #       >>> [[2,2],[-1]]
+    #        
+    #       cv=[1,2,0,2,2,-1,2,3,0,-1,-1]
+    #       break_chain_vector(cv)
+    #       >>> [[1, 2], [2, 2], [-1], [2, 3], [-1], [-1]]
+    '''
     
     #vertex_index=-1
     #chain_vertices=[]
